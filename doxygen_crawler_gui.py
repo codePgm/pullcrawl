@@ -135,7 +135,8 @@ class DoxygenCrawlerGUI:
             
             self.log(f"Doxygen 문서 크롤링 시작")
             self.log(f"URL: {url}")
-            self.log(f"최대 페이지: {max_pages}\n")
+            self.log(f"최대 페이지: {max_pages}")
+            self.log("")
             
             self.crawler = DoxygenCrawler(
                 url, max_pages, delay, output_dir,
@@ -148,11 +149,10 @@ class DoxygenCrawlerGUI:
                 self.log("결과 저장 중...")
                 
                 json_file = self.crawler.save_json()
-                files_msg, summary_txt = self.crawler.save_txt()
+                files_msg = self.crawler.save_txt()
                 
                 self.log(f"✓ JSON: {json_file}")
                 self.log(f"✓ 원문 TXT: {files_msg}")
-                self.log(f"✓ 요약 TXT: {summary_txt}")
                 self.log(f"{'='*60}\n")
                 self.log(f"완료! 총 {len(results)}개 페이지 수집")
                 
@@ -218,7 +218,6 @@ class DoxygenCrawler:
     def create_directories(self):
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         Path(self.output_dir, "crawl_원문").mkdir(parents=True, exist_ok=True)
-        Path(self.output_dir, "crawl_요약본").mkdir(parents=True, exist_ok=True)
         Path(self.output_dir, "crawlJson").mkdir(parents=True, exist_ok=True)
     
     def is_valid_url(self, url):
@@ -533,8 +532,7 @@ class DoxygenCrawler:
     def save_txt(self):
         import re
         
-        base_dir = Path(self.output_dir, "crawl_원문")
-        summary_file = Path(self.output_dir, "crawl_요약본", "크롤링_요약.txt")
+        full_dir = Path(self.output_dir, "crawl_원문")
         
         # Get current timestamp
         timestamp = time.strftime('%Y%m%d_%H%M%S')
@@ -555,7 +553,7 @@ class DoxygenCrawler:
             
             # Create filename: 001_[PDF]_Title_20240205_143022.txt
             filename = f"{idx:03d}_{type_marker}{clean_title}_{timestamp}.txt"
-            filepath = base_dir / filename
+            filepath = full_dir / filename
             
             # Write individual file
             with open(filepath, 'w', encoding='utf-8') as f:
@@ -587,46 +585,7 @@ class DoxygenCrawler:
             
             saved_files.append(str(filepath))
         
-        # Summary file (목록)
-        with open(summary_file, 'w', encoding='utf-8') as f:
-            f.write("="*80 + "\n")
-            f.write("Doxygen 문서 크롤링 요약\n")
-            f.write("="*80 + "\n")
-            f.write(f"기준 URL: {self.base_url}\n")
-            f.write(f"크롤링 날짜: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"총 페이지: {len(self.pages_data)}\n")
-            f.write(f"성공: {sum(1 for p in self.pages_data if p['status'] == 'success')}\n")
-            f.write(f"실패: {sum(1 for p in self.pages_data if p['status'] == 'error')}\n")
-            f.write(f"HTML 파일: {sum(1 for p in self.pages_data if p.get('file_type') == 'html')}\n")
-            f.write(f"PDF 파일: {sum(1 for p in self.pages_data if p.get('file_type') == 'pdf')}\n")
-            f.write(f"저장된 파일: {len(saved_files)}개\n")
-            f.write("="*80 + "\n\n")
-            
-            f.write("저장된 파일 목록:\n")
-            f.write("-"*80 + "\n")
-            for idx, page in enumerate(self.pages_data, 1):
-                if page['status'] != 'success':
-                    continue
-                
-                title = page.get('title', 'Untitled')
-                clean_title = re.sub(r'[<>:"/\\|?*]', '_', title)[:100]
-                file_type = page.get('file_type', 'html')
-                type_marker = '[PDF]_' if file_type == 'pdf' else ''
-                filename = f"{idx:03d}_{type_marker}{clean_title}_{timestamp}.txt"
-                
-                f.write(f"\n{idx}. {filename}\n")
-                f.write(f"   제목: {title}\n")
-                f.write(f"   형식: {file_type.upper()}\n")
-                f.write(f"   URL: {page['url']}\n")
-                
-                if page.get('headings'):
-                    f.write(f"   섹션: {len(page['headings'])}개\n")
-                
-                if page.get('text'):
-                    preview = page['text'][:200].replace('\n', ' ')
-                    f.write(f"   미리보기: {preview}...\n")
-        
-        return f"{len(saved_files)}개 파일 저장됨", str(summary_file)
+        return f"{len(saved_files)}개 파일 저장됨"
 
 
 def main():
