@@ -210,7 +210,10 @@ class DoxygenCrawler:
         print("1단계: 공통 Doxygen 페이지 확인 중...")
         
         seed_urls = self.get_common_doxygen_pages()
-        seed_urls.insert(0, self.base_url)
+        
+        # Add base URL if not already in list (avoid duplicates)
+        if self.base_url not in seed_urls:
+            seed_urls.insert(0, self.base_url)
         
         all_links = set()
         
@@ -240,7 +243,14 @@ class DoxygenCrawler:
         
         print(f"\n2단계: 각 페이지 크롤링 (최대 {min(len(all_links), self.max_pages)}개)\n")
         
+        # Crawl each page - prioritize base URL first
         sorted_links = sorted(all_links)
+        
+        # Move base URL to front if it exists
+        if self.base_url in sorted_links:
+            sorted_links.remove(self.base_url)
+            sorted_links.insert(0, self.base_url)
+        
         for idx, url in enumerate(sorted_links[:self.max_pages], 1):
             if url in self.visited_urls:
                 continue

@@ -55,21 +55,9 @@ class DoxygenCrawlerGUI:
         ttk.Entry(options_frame, textvariable=self.output_dir_var, width=30).grid(row=1, column=1, columnspan=2, sticky=(tk.W, tk.E), padx=5, pady=5)
         ttk.Button(options_frame, text="찾아보기", command=self.browse_output_dir).grid(row=1, column=3, padx=5, pady=5)
         
-        # Crawl strategy
-        strategy_frame = ttk.LabelFrame(main_frame, text="크롤링 전략", padding="10")
-        strategy_frame.grid(row=2, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
-        
-        self.crawl_strategy_var = tk.StringVar(value="aggressive")
-        ttk.Radiobutton(strategy_frame, text="적극적 (모든 .html 파일)", 
-                       variable=self.crawl_strategy_var, value="aggressive").grid(row=0, column=0, sticky=tk.W, padx=5)
-        ttk.Radiobutton(strategy_frame, text="보통 (API 페이지만)", 
-                       variable=self.crawl_strategy_var, value="normal").grid(row=0, column=1, sticky=tk.W, padx=5)
-        ttk.Radiobutton(strategy_frame, text="보수적 (주요 페이지만)", 
-                       variable=self.crawl_strategy_var, value="conservative").grid(row=0, column=2, sticky=tk.W, padx=5)
-        
         # Buttons
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=3, column=0, columnspan=3, pady=10)
+        button_frame.grid(row=2, column=0, columnspan=3, pady=10)
         
         self.start_button = ttk.Button(button_frame, text="크롤링 시작", command=self.start_crawl)
         self.start_button.grid(row=0, column=0, padx=5)
@@ -80,23 +68,23 @@ class DoxygenCrawlerGUI:
         ttk.Button(button_frame, text="결과 폴더 열기", command=self.open_output_folder).grid(row=0, column=2, padx=5)
         
         # Progress
-        ttk.Label(main_frame, text="진행 상황:").grid(row=4, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="진행 상황:").grid(row=3, column=0, sticky=tk.W, pady=5)
         self.progress_var = tk.StringVar(value="대기 중...")
-        ttk.Label(main_frame, textvariable=self.progress_var).grid(row=4, column=1, columnspan=2, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, textvariable=self.progress_var).grid(row=3, column=1, columnspan=2, sticky=tk.W, pady=5)
         
         self.progress_bar = ttk.Progressbar(main_frame, mode='indeterminate')
-        self.progress_bar.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
+        self.progress_bar.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
         # Log
-        ttk.Label(main_frame, text="로그:").grid(row=6, column=0, sticky=tk.W, pady=5)
+        ttk.Label(main_frame, text="로그:").grid(row=5, column=0, sticky=tk.W, pady=5)
         self.log_text = scrolledtext.ScrolledText(main_frame, width=80, height=20, wrap=tk.WORD)
-        self.log_text.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        self.log_text.grid(row=6, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         
         # Configure grid
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
-        main_frame.rowconfigure(7, weight=1)
+        main_frame.rowconfigure(6, weight=1)
     
     def browse_output_dir(self):
         directory = filedialog.askdirectory()
@@ -144,15 +132,13 @@ class DoxygenCrawlerGUI:
     def run_crawl(self, url, max_pages, delay):
         try:
             output_dir = self.output_dir_var.get()
-            strategy = self.crawl_strategy_var.get()
             
             self.log(f"Doxygen 문서 크롤링 시작")
             self.log(f"URL: {url}")
-            self.log(f"전략: {strategy}")
             self.log(f"최대 페이지: {max_pages}\n")
             
             self.crawler = DoxygenCrawler(
-                url, max_pages, delay, output_dir, strategy,
+                url, max_pages, delay, output_dir,
                 self.log, lambda: self.is_crawling
             )
             results = self.crawler.crawl()
@@ -210,12 +196,11 @@ class DoxygenCrawler:
         'pages.html',
     ]
     
-    def __init__(self, base_url, max_pages, delay, output_dir, strategy, log_func, should_continue):
+    def __init__(self, base_url, max_pages, delay, output_dir, log_func, should_continue):
         self.base_url = base_url
         self.max_pages = max_pages
         self.delay = delay
         self.output_dir = output_dir
-        self.strategy = strategy
         self.log = log_func
         self.should_continue = should_continue
         self.visited_urls = set()
@@ -449,7 +434,10 @@ class DoxygenCrawler:
         
         # Start with common Doxygen pages
         seed_urls = self.get_common_doxygen_pages()
-        seed_urls.insert(0, self.base_url)
+        
+        # Add base URL if not already in list (avoid duplicates)
+        if self.base_url not in seed_urls:
+            seed_urls.insert(0, self.base_url)
         
         self.log(f"시드 URL {len(seed_urls)}개 확인 중...")
         
@@ -492,8 +480,14 @@ class DoxygenCrawler:
         self.log(f"2단계: 각 페이지 크롤링 (최대 {min(len(all_links), self.max_pages)}개)")
         self.log(f"{'='*60}\n")
         
-        # Crawl each page
+        # Crawl each page - prioritize base URL first
         sorted_links = sorted(all_links)
+        
+        # Move base URL to front if it exists
+        if self.base_url in sorted_links:
+            sorted_links.remove(self.base_url)
+            sorted_links.insert(0, self.base_url)
+        
         for idx, url in enumerate(sorted_links[:self.max_pages], 1):
             if not self.should_continue():
                 break
@@ -539,32 +533,29 @@ class DoxygenCrawler:
     def save_txt(self):
         import re
         
-        full_dir = Path(self.output_dir, "crawl_원문")
+        base_dir = Path(self.output_dir, "crawl_원문")
         summary_file = Path(self.output_dir, "crawl_요약본", "크롤링_요약.txt")
         
         # Get current timestamp
         timestamp = time.strftime('%Y%m%d_%H%M%S')
         
-        # Save each page as individual file
+        # Save each page directly in crawl_원문 folder
         saved_files = []
         for idx, page in enumerate(self.pages_data, 1):
             if page['status'] != 'success':
                 continue
             
-            # Clean title for filename (remove invalid characters)
+            # Clean title for filename
             title = page.get('title', 'Untitled')
-            # Remove invalid filename characters
-            clean_title = re.sub(r'[<>:"/\\|?*]', '_', title)
-            # Limit length
-            clean_title = clean_title[:100]
+            clean_title = re.sub(r'[<>:"/\\|?*]', '_', title)[:100]
             
             # Check if PDF
             file_type = page.get('file_type', 'html')
             type_marker = '[PDF]_' if file_type == 'pdf' else ''
             
-            # Create filename: 001_[PDF]_Title_20240205_143022.txt or 001_Title_20240205_143022.txt
+            # Create filename: 001_[PDF]_Title_20240205_143022.txt
             filename = f"{idx:03d}_{type_marker}{clean_title}_{timestamp}.txt"
-            filepath = full_dir / filename
+            filepath = base_dir / filename
             
             # Write individual file
             with open(filepath, 'w', encoding='utf-8') as f:
