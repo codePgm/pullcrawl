@@ -1,0 +1,27 @@
+services:
+  site-crawler:
+    image: swm/site-crawler-dev:${VERSION}
+    container_name: site-crawler-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+          UID: "${UID}"
+          GID: "${GID}"
+    ports:
+      - "2222:22"
+    volumes:
+      # 시간대 동기화
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      # 프로젝트 디렉토리 마운트
+      - ..:/app
+      # 개발환경 설정 디렉토리 컨테이너 내 비활성화
+      - /app/.devcontainer
+    networks:
+      - site-crawler-network-dev
+    tty: true
+
+networks:
+  site-crawler-network-dev:
+    driver: bridge
