@@ -1,0 +1,5 @@
+# Advanced Crawler Requirements (Scrapy)
+scrapy>=2.11.0
+scrapy-playwright>=0.0.34
+readability-lxml>=0.8.1
+playwright>=1.40.0

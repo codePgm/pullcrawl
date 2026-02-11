@@ -1,129 +1,297 @@
-# 🕷️ Doxygen 문서 크롤러
+# 🕷️ 통합 웹 크롤러
 
-Doxygen으로 생성된 API 문서를 자동으로 크롤링하여 TXT 파일로 저장하는 도구입니다.
+하나의 GUI에서 두 가지 크롤러를 선택하여 사용할 수 있습니다!
 
-## 📁 프로젝트 구조
+## ✨ 두 가지 크롤러
 
-```
-doxygen_crawler_refactored/
-├── 📁 config/                  # 설정
-│   ├── __init__.py
-│   └── constants.py           # 상수 정의
-│
-├── 📁 utils/                   # 유틸리티 모듈
-│   ├── __init__.py
-│   ├── url_utils.py           # URL 처리
-│   ├── text_utils.py          # 텍스트 추출
-│   ├── pdf_utils.py           # PDF 처리
-│   └── file_utils.py          # 파일 작업
-│
-├── crawler.py                 # 메인 크롤러 로직
-├── gui.py                     # GUI 애플리케이션
-├── run.bat                    # 실행 파일 (Windows)
-└── README.md                  # 이 파일
-```
+### 🚀 간단 크롤러 (Simple Crawler)
 
-## 🚀 사용 방법
+**용도:**
+- Doxygen 문서 (NVIDIA, OpenCV 등)
+- Sphinx 문서 (Python Docs, ROS 등)
+- 정적 HTML 웹사이트
 
-### 1. 간단 실행 (GUI)
+**특징:**
+- ✅ 빠름 (1분 내외)
+- ✅ 간단 (설치 쉬움)
+- ✅ GUI 내에서 직접 실행
+- ✅ TXT 파일 출력
 
-```bash
-# Windows
-run.bat 더블클릭
-
-# Python 직접 실행
-python gui.py
-```
-
-### 2. 설정
-
-- **URL**: 크롤링할 Doxygen 문서의 시작 URL
-- **최대 페이지**: 수집할 최대 페이지 수 (기본: 500)
-- **요청 간격**: 페이지 간 대기 시간 (초) (기본: 1.0)
-- **출력 폴더**: 결과 저장 위치 (기본: doxygen_crawl)
-
-### 3. 결과
-
-```
-doxygen_crawl/
-├── crawl_원문/                    # 크롤링한 원본 파일들
-│   ├── 001_index_20240210.txt
-│   ├── 002_modules_20240210.txt
-│   └── ...
-│
-└── crawlJson/                     # JSON 데이터
-    └── crawl_results.json
-```
-
-## ✨ 주요 기능
-
-- ✅ **Doxygen 전용 최적화** - 자동으로 주요 페이지 탐색
-- ✅ **PDF 지원** - PDF 파일도 텍스트로 변환
-- ✅ **중복 제거** - 같은 페이지 중복 크롤링 방지
-- ✅ **깨끗한 출력** - 개별 TXT 파일로 저장
-- ✅ **진행 상황 표시** - 실시간 로그 확인
-- ✅ **중단 가능** - 언제든지 중지 가능
-
-## 📋 요구 사항
-
-- Python 3.8 이상
-- 필수 패키지:
-  - `requests` - HTTP 요청
-  - `beautifulsoup4` - HTML 파싱
-  - `pypdf` - PDF 처리 (선택)
-
-## 🔧 모듈 설명
-
-### `config/constants.py`
-프로그램 전체에서 사용하는 상수 정의
-
-### `utils/url_utils.py`
-URL 정규화, 검증, 파싱 등 URL 관련 유틸리티
-
-### `utils/text_utils.py`
-HTML에서 제목, 본문, 코드 블록 추출
-
-### `utils/pdf_utils.py`
-PDF 파일에서 텍스트 추출
-
-### `utils/file_utils.py`
-파일명 정리, 타임스탬프 생성, 디렉토리 생성
-
-### `crawler.py`
-메인 크롤러 로직 - 페이지 탐색, 데이터 수집, 저장
-
-### `gui.py`
-사용자 인터페이스 - Tkinter 기반 GUI
-
-## 💡 사용 예시
-
-### NVIDIA DRIVE OS 문서 크롤링
-
-```
-URL: https://developer.nvidia.com/docs/drive/drive-os/6.0.10/public/drive-os-linux-sdk/api_reference/index.html
-최대 페이지: 500
-요청 간격: 1.0
-```
-
-결과: 430개 페이지의 API 문서가 개별 TXT 파일로 저장됩니다.
-
-## 🐛 문제 해결
-
-### "모듈을 찾을 수 없습니다"
+**요구사항:**
 ```bash
 pip install requests beautifulsoup4 pypdf
 ```
 
-### "PDF 라이브러리 없음"
-PDF 기능은 선택사항입니다. HTML만 크롤링하려면 무시해도 됩니다.
+### ⚡ 고급 크롤러 (Advanced Crawler)
+
+**용도:**
+- React/Vue/Angular 사이트
+- SPA (Single Page Application)
+- JavaScript로 생성되는 콘텐츠
+
+**특징:**
+- ✅ SPA 지원 (Playwright 렌더링)
+- ✅ 고급 기능 (이미지 다운로드, CSS 배경 추출)
+- ⚠️ 느림 (30분~1시간)
+- ⚠️ 복잡 (설치 많음)
+- ✅ JSONL 출력
+
+**요구사항:**
 ```bash
-pip install pypdf
+pip install scrapy scrapy-playwright readability-lxml
+playwright install chromium
 ```
 
-## 📝 라이센스
+---
+
+## 🚀 빠른 시작
+
+### 1단계: 설치
+
+```bash
+# 기본 설치 (간단 크롤러만)
+run.bat 더블클릭
+```
+
+**고급 크롤러도 사용하려면:**
+```bash
+setup_advanced.bat 더블클릭
+```
+
+### 2단계: 실행
+
+```bash
+run.bat 더블클릭
+```
+
+### 3단계: GUI에서 선택
+
+```
+┌─────────────────────────────────────┐
+│ 크롤러 선택:                        │
+│ ● 간단 크롤러 (추천)                │
+│ ○ 고급 크롤러                       │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 📁 프로젝트 구조
+
+```
+unified_crawler/
+├── launcher.py              # 통합 GUI 런처
+├── run.bat                  # 실행 파일
+├── setup_advanced.bat       # 고급 크롤러 설치
+│
+├── simple_crawler/          # 간단 크롤러
+│   ├── config/
+│   ├── utils/
+│   └── crawler.py
+│
+└── scrapy_crawler/          # 고급 크롤러 (Scrapy)
+    ├── site_crawler/
+    │   ├── spiders/
+    │   └── ...
+    └── scrapy.cfg
+```
+
+---
+
+## 💡 어떤 크롤러를 선택할까?
+
+### 간단 크롤러 선택:
+
+✅ **Doxygen 문서**
+- NVIDIA DRIVE OS
+- OpenCV Documentation
+- ROS Documentation
+
+✅ **Sphinx 문서**
+- Python Documentation
+- Django Documentation
+
+✅ **정적 HTML**
+- 일반 블로그
+- 위키 사이트
+
+### 고급 크롤러 선택:
+
+✅ **SPA 사이트**
+- Vert.x Documentation
+- React Documentation
+- Vue.js Documentation
+
+✅ **JavaScript 많은 사이트**
+- 내용이 동적으로 로드되는 사이트
+- 스크롤해야 내용이 나타나는 사이트
+
+---
+
+## 🎯 사용 예시
+
+### 예시 1: NVIDIA 문서 (간단 크롤러)
+
+```
+크롤러: 🚀 간단 크롤러
+URL: https://developer.nvidia.com/docs/drive/drive-os/.../index.html
+최대 페이지: 500
+출력 폴더: ./nvidia_docs
+
+→ 결과: TXT 파일 430개
+→ 시간: 약 5분
+```
+
+### 예시 2: Vert.x 문서 (고급 크롤러)
+
+```
+크롤러: ⚡ 고급 크롤러
+URL: https://vertx.io/docs/vertx-core/java/
+최대 페이지: 100
+깊이: 4
+렌더링: ☑ 사용
+
+→ 결과: JSONL 파일
+→ 시간: 약 30분
+```
+
+---
+
+## 📊 비교표
+
+| 항목 | 간단 크롤러 | 고급 크롤러 |
+|------|-----------|-----------|
+| **속도** | ⚡⚡⚡ 빠름 (5분) | 🐢 느림 (30분+) |
+| **설치** | ✅ 간단 (2개 패키지) | ⚠️ 복잡 (4개 패키지 + 브라우저) |
+| **SPA 지원** | ❌ 없음 | ✅ 있음 (Playwright) |
+| **출력** | TXT | JSONL |
+| **GUI 실행** | ✅ GUI 내에서 | ⚠️ 별도 창 |
+| **이미지 수집** | ❌ | ✅ |
+| **적합한 사이트** | Doxygen, Sphinx | React, Vue, SPA |
+
+---
+
+## ⚙️ 설정
+
+### 공통 설정
+
+- **최대 페이지**: 크롤링할 최대 페이지 수
+- **출력 폴더**: 결과 저장 위치
+
+### 간단 크롤러 설정
+
+- **요청 간격**: 페이지 간 대기 시간 (초)
+
+### 고급 크롤러 설정
+
+- **깊이 제한**: 링크를 따라갈 최대 깊이
+- **Playwright 렌더링**: JavaScript 실행 여부
+
+---
+
+## 🐛 문제 해결
+
+### "간단 크롤러를 찾을 수 없습니다"
+
+```bash
+# simple_crawler 폴더가 있는지 확인
+# 없으면 doxygen_crawler_refactored 내용을 복사
+```
+
+### "Scrapy를 찾을 수 없습니다"
+
+```bash
+# 고급 크롤러 설치 필요
+setup_advanced.bat
+```
+
+### "모듈을 찾을 수 없습니다"
+
+```bash
+# 패키지 재설치
+pip install requests beautifulsoup4 pypdf
+```
+
+### 고급 크롤러가 멈춤
+
+- 정상입니다! Playwright가 브라우저를 실행 중
+- 별도 창에서 로그 확인
+- 30분~1시간 소요 가능
+
+---
+
+## 📝 출력 형식
+
+### 간단 크롤러
+
+```
+./crawl_output/
+├── crawl_원문/
+│   ├── 001_index_20240210.txt
+│   ├── 002_modules_20240210.txt
+│   └── ...
+└── crawlJson/
+    └── crawl_results.json
+```
+
+### 고급 크롤러
+
+```
+./crawl_output/
+└── pages.jsonl    # 각 줄이 1개 페이지 (JSON)
+```
+
+---
+
+## 💡 팁
+
+### 1. 먼저 간단 크롤러로 시도
+
+대부분의 문서 사이트는 간단 크롤러로 충분합니다.
+
+### 2. 고급 크롤러는 필요할 때만
+
+SPA가 확실할 때만 고급 크롤러 사용하세요.
+
+### 3. 소량으로 먼저 테스트
+
+```
+최대 페이지: 10
+→ 테스트 후 늘리기
+```
+
+### 4. 출력 폴더 분리
+
+```
+NVIDIA: ./nvidia_docs
+Vert.x: ./vertx_docs
+```
+
+---
+
+## 🆚 언제 어떤 크롤러?
+
+```
+사이트 확인 → HTML 소스 보기 (Ctrl+U)
+
+├─ <div> <p> <a> 태그 많이 보임
+│  → 간단 크롤러 ✅
+│
+└─ <div id="app"></div> <script> 만 보임
+   → 고급 크롤러 ⚡
+```
+
+---
+
+## 📄 라이센스
 
 MIT License
 
-## 🤝 기여
+## 🙏 크레딧
 
-버그 리포트나 기능 제안은 환영합니다!
+- Simple Crawler: 정적 HTML 전용 고속 크롤러
+- Advanced Crawler: Scrapy + Playwright 기반 SPA 크롤러
+
+---
+
+Happy Crawling! 🎉

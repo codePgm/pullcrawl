@@ -58,7 +58,11 @@ class DoxygenCrawler:
         return seed_urls
     
     def _is_valid_url(self, url: str) -> bool:
-        """Check if URL should be crawled."""
+        """Check if URL should be crawled.
+        
+        Uses a blacklist approach to block known non-HTML files
+        while allowing modern URLs without extensions.
+        """
         if not url or url in self.visited_urls:
             return False
         
@@ -73,11 +77,50 @@ class DoxygenCrawler:
         if not full_url.startswith(f"{self.domain}{self.base_path}"):
             return False
         
-        # Must be HTML or PDF
-        if not (full_url.endswith('.html') or full_url.endswith('.htm') or full_url.endswith('.pdf')):
-            return False
+        # File extension blacklist (block these types)
+        BLOCKED_EXTENSIONS = {
+            # Images
+            '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.ico', '.bmp',
+            # Styles & Scripts
+            '.css', '.js', '.json', '.xml', '.map',
+            # Archives
+            '.zip', '.tar', '.gz', '.rar', '.7z',
+            # Media
+            '.mp4', '.mp3', '.avi', '.mov', '.wmv', '.flv', '.wav',
+            # Fonts
+            '.woff', '.woff2', '.ttf', '.eot', '.otf',
+            # Documents (non-HTML/PDF)
+            '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+            # Other
+            '.txt', '.csv', '.log',
+        }
         
+        # Get filename from URL path
+        path = urlparse(full_url).path
+        if not path or path == '/':
+            return True
+        
+        filename = path.split('/')[-1]
+        
+        # If filename has extension
+        if '.' in filename:
+            # Get extension (lowercase)
+            ext = '.' + filename.split('.')[-1].lower()
+            
+            # Block if in blacklist
+            if ext in BLOCKED_EXTENSIONS:
+                return False
+            
+            # Explicitly allow HTML and PDF
+            if ext in {'.html', '.htm', '.pdf'}:
+                return True
+            
+            # Unknown extensions: allow (could be query params like ?v=1.0)
+            return True
+        
+        # No extension: allow (modern URLs like /docs/guide/)
         return True
+
     
     def _find_links(self, soup: BeautifulSoup, current_url: str) -> list[str]:
         """Find all valid HTML links in the page."""
@@ -127,13 +170,16 @@ class DoxygenCrawler:
             response = requests.get(url, timeout=30, headers=headers)
             response.raise_for_status()
             
-            # Check if PDF
-            if url.endswith('.pdf'):
+            # Check Content-Type
+            content_type = response.headers.get('Content-Type', '').lower()
+            
+            # Handle PDF
+            if 'application/pdf' in content_type or url.endswith('.pdf'):
                 self.log(f"    📄 PDF 파일 감지")
                 pdf_text = extract_pdf_text(response.content)
                 
                 if pdf_text:
-                    title = url.split('/')[-1].replace('.pdf', '')
+                    title = url.split('/')[-1].replace('.pdf', '') or 'PDF Document'
                     self.log(f"    ✓ PDF 변환 완료: {title}")
                     
                     return {
@@ -153,18 +199,35 @@ class DoxygenCrawler:
                         'file_type': 'pdf'
                     }
             
+            # Skip non-HTML content types
+            if content_type and not any(t in content_type for t in ['text/html', 'application/xhtml', 'text/plain']):
+                self.log(f"    ⊘ HTML 아님: {content_type}")
+                return {
+                    'url': url,
+                    'status': 'skipped',
+                    'error': f'Non-HTML content: {content_type}',
+                    'file_type': content_type.split(';')[0]
+                }
+            
             # HTML processing
             soup = BeautifulSoup(response.content, 'html.parser')
             content = self._extract_content(soup)
             
-            # Use filename from URL if title is generic
+            # Use filename from URL if title is generic or empty
             title = content.get('title', '')
             if not title or title == 'NVIDIA DRIVE OS Linux SDK API Reference':
-                filename = url.split('/')[-1]
+                # Try to get meaningful name from URL
+                path_parts = url.rstrip('/').split('/')
+                filename = path_parts[-1] if path_parts else ''
+                
                 if filename.endswith('.html'):
                     title = filename.replace('.html', '').replace('_', ' ')
+                elif filename:
+                    title = filename.replace('_', ' ').replace('-', ' ')
                 else:
-                    title = filename
+                    # Use second-to-last part (like 'java' from /docs/vertx-core/java/)
+                    title = path_parts[-2] if len(path_parts) > 1 else 'Untitled'
+                
                 content['title'] = title
             
             self.log(f"    ✓ {content.get('title', 'Untitled')}")
@@ -185,6 +248,7 @@ class DoxygenCrawler:
                 'error': str(e),
                 'soup': None
             }
+
     
     def crawl(self) -> list[dict]:
         """Main crawl method."""
