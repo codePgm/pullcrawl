@@ -41,8 +41,6 @@ class DoxygenCrawler:
     def _create_directories(self):
         """Create necessary output directories."""
         ensure_directory(Path(self.output_dir))
-        ensure_directory(Path(self.output_dir, "crawl_원문"))
-        ensure_directory(Path(self.output_dir, "crawlJson"))
     
     def _get_seed_urls(self) -> list[str]:
         """Get list of seed URLs to check."""
@@ -326,28 +324,42 @@ class DoxygenCrawler:
         return self.pages_data
     
     def save_json(self) -> str:
-        """Save results as JSON."""
-        json_file = Path(self.output_dir, "crawlJson", "crawl_results.json")
+        """Save results as JSONL (JSON Lines) format - one JSON per line."""
+        # New path: crawl_output/simple_json/pages.jsonl
+        json_dir = Path(self.output_dir, "simple_json")
+        json_dir.mkdir(parents=True, exist_ok=True)
+        json_file = json_dir / "pages.jsonl"
         
-        results = {
-            'base_url': self.base_url,
-            'crawl_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'summary': {
-                'total_pages': len(self.pages_data),
-                'successful_pages': sum(1 for p in self.pages_data if p['status'] == 'success'),
-                'failed_pages': sum(1 for p in self.pages_data if p['status'] == 'error'),
-            },
-            'pages': self.pages_data
-        }
-        
+        # Write JSONL format (one JSON object per line)
         with open(json_file, 'w', encoding='utf-8') as f:
-            json.dump(results, f, ensure_ascii=False, indent=2)
+            for page in self.pages_data:
+                if page['status'] != 'success':
+                    continue
+                
+                # Convert to Scrapy-like format
+                jsonl_item = {
+                    'url': page['url'],
+                    'title': page.get('title', ''),
+                    'text': page.get('text', ''),
+                    'headings': page.get('headings', []),
+                    'code_blocks': page.get('code_blocks', []),
+                    'file_type': page.get('file_type', 'html'),
+                    'rendered': False,  # Simple crawler doesn't render
+                    'depth': 0,
+                    'out_links': [],  # Simple crawler doesn't track outlinks
+                    'images': []  # Simple crawler doesn't collect images
+                }
+                
+                # Write one JSON per line
+                f.write(json.dumps(jsonl_item, ensure_ascii=False) + '\n')
         
         return str(json_file)
     
     def save_txt(self) -> str:
         """Save results as individual TXT files."""
-        full_dir = Path(self.output_dir, "crawl_원문")
+        # New path: crawl_output/simple_crawler/
+        txt_dir = Path(self.output_dir, "simple_crawler")
+        txt_dir.mkdir(parents=True, exist_ok=True)
         timestamp = get_timestamp()
         
         saved_files = []
@@ -365,7 +377,7 @@ class DoxygenCrawler:
             
             # Create filename
             filename = f"{idx:03d}_{type_marker}{clean_title}_{timestamp}.txt"
-            filepath = full_dir / filename
+            filepath = txt_dir / filename
             
             # Write file
             with open(filepath, 'w', encoding='utf-8') as f:

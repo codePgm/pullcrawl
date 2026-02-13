@@ -40,7 +40,7 @@ class CrawlerLauncher:
         
         simple_radio = ttk.Radiobutton(
             type_frame, 
-            text="간단 크롤러 (추천) - HTML 문서 탐색 특화",
+            text="🚀 간단 크롤러 (추천) - Doxygen, Sphinx 등 정적 HTML 문서",
             variable=self.crawler_type, 
             value="simple",
             command=self._on_type_change
@@ -49,7 +49,7 @@ class CrawlerLauncher:
         
         advanced_radio = ttk.Radiobutton(
             type_frame, 
-            text="고급 크롤러 - SPA 문서 탐색 가능",
+            text="⚡ 고급 크롤러 - React, Vue, Angular 등 SPA 사이트 (느림, 복잡)",
             variable=self.crawler_type, 
             value="advanced",
             command=self._on_type_change
@@ -141,13 +141,13 @@ class CrawlerLauncher:
             self.simple_frame.grid()
             self.advanced_frame.grid_remove()
             
-            self.desc_label.config(text="편하게 쓰기에 적합 합니다.")
+            self.desc_label.config(text="✓ 빠름 | ✓ 간단 | ✓ GUI | → NVIDIA, OpenCV, ROS 등 Doxygen/Sphinx 문서")
         else:
             # Show advanced options, hide simple
             self.simple_frame.grid_remove()
             self.advanced_frame.grid()
             
-            self.desc_label.config(text="다소 느릴 수 있습니다.")
+            self.desc_label.config(text="⚠ 느림 | ⚠ 복잡 | ⚠ 명령줄 | → Vert.x, React Docs 등 SPA 사이트")
     
     def _browse_output_dir(self):
         """Browse for output directory."""
@@ -265,13 +265,16 @@ class CrawlerLauncher:
                 json_file = crawler.save_json()
                 files_msg = crawler.save_txt()
                 
-                self._log(f"✓ JSON: {json_file}")
-                self._log(f"✓ 원문 TXT: {files_msg}")
+                self._log(f"✓ JSONL: {json_file}")
+                self._log(f"✓ TXT 파일: {files_msg}")
                 self._log(f"{'='*60}\n")
                 self._log(f"완료! 총 {len(results)}개 페이지 수집")
+                self._log(f"\n출력 위치:")
+                self._log(f"  - TXT: {output_dir}/simple_crawler/")
+                self._log(f"  - JSON: {output_dir}/simple_json/pages.jsonl")
                 
                 self.progress_var.set(f"완료! {len(results)}개 페이지")
-                messagebox.showinfo("완료", f"크롤링 완료!\n{len(results)}개 페이지 수집")
+                messagebox.showinfo("완료", f"크롤링 완료!\n\n{len(results)}개 페이지 수집\n\n출력:\n- TXT: {output_dir}/simple_crawler/\n- JSON: {output_dir}/simple_json/pages.jsonl")
             else:
                 self._log("\n중지됨")
                 self.progress_var.set("중지됨")
@@ -295,6 +298,9 @@ class CrawlerLauncher:
             output_dir = self.output_dir_var.get()
             depth = int(self.depth_var.get())
             render = 1 if self.render_var.get() else 0
+            
+            # Convert to absolute path (important for Scrapy!)
+            output_dir = os.path.abspath(output_dir)
             
             # Extract domain from URL
             from urllib.parse import urlparse
@@ -321,7 +327,7 @@ class CrawlerLauncher:
                 "scrapy", "crawl", "site",
                 "-a", f"seed={url}",
                 "-a", f"allowed_domains={domain}",
-                "-a", f"out_dir={output_dir}",
+                "-a", f"out_dir={output_dir}",  # Now absolute path!
                 "-a", f"max_pages={max_pages}",
                 "-a", f"max_depth={depth}",
                 "-a", f"render={render}"
@@ -391,12 +397,12 @@ class CrawlerLauncher:
             if self.process.returncode == 0:
                 self._log("\n✅ 크롤링 완료!")
                 self.progress_var.set("완료!")
-                messagebox.showinfo("완료", f"크롤링 완료!\n결과: {output_dir}/pages.jsonl")
+                messagebox.showinfo("완료", f"크롤링 완료!\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages.jsonl")
             elif self.process.returncode is None:
                 # Process killed due to timeout
                 self._log("\n⚠️  프로세스 강제 종료됨 (타임아웃)")
                 self.progress_var.set("강제 종료됨")
-                messagebox.showinfo("완료", f"크롤링 완료 (강제 종료)\n결과: {output_dir}/pages.jsonl")
+                messagebox.showinfo("완료", f"크롤링 완료 (강제 종료)\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages.jsonl")
             else:
                 self._log(f"\n❌ 오류 발생 (코드: {self.process.returncode})")
                 self.progress_var.set("오류")

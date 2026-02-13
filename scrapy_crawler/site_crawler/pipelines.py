@@ -90,13 +90,22 @@ class ImageAndJsonlPipeline(ImagesPipeline): # X
 
 
 class JsonlPipeline:
-    """Write page JSONL without downloading images."""
+    """Write page JSONL and TXT files."""
 
     def open_spider(self, spider):
         self.out_dir = getattr(spider, "out_dir", "./dump")
-        os.makedirs(self.out_dir, exist_ok=True)
-        self.jsonl_path = os.path.join(self.out_dir, "pages.jsonl")
+        
+        # Create directory structure: crawl_output/scrapy_json/ and crawl_output/scrapy_crawler/
+        self.json_dir = os.path.join(self.out_dir, "scrapy_json")
+        self.txt_dir = os.path.join(self.out_dir, "scrapy_crawler")
+        
+        os.makedirs(self.json_dir, exist_ok=True)
+        os.makedirs(self.txt_dir, exist_ok=True)
+        
+        self.jsonl_path = os.path.join(self.json_dir, "pages.jsonl")
         self._fh = open(self.jsonl_path, "a", encoding="utf-8")
+        
+        self.page_counter = 0
 
     def close_spider(self, spider):
         try:
@@ -105,8 +114,81 @@ class JsonlPipeline:
             pass
 
     def process_item(self, item, spider):
+        # Save JSONL
         rec = dict(item)
         rec.setdefault("fetched_at", now_iso())
         self._fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
         self._fh.flush()
+        
+        # Save TXT file
+        self.page_counter += 1
+        self._save_txt_file(item, self.page_counter)
+        
         return item
+    
+    def _save_txt_file(self, item, page_num):
+        """Save individual TXT file for each page."""
+        from datetime import datetime
+        
+        # Clean title for filename
+        title = item.get('title', 'Untitled')
+        clean_title = self._clean_filename(title)
+        
+        # Create filename
+        timestamp = datetime.now().strftime('%Y%m%d')
+        filename = f"{page_num:03d}_{clean_title}_{timestamp}.txt"
+        filepath = os.path.join(self.txt_dir, filename)
+        
+        # Write file
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write("="*80 + "\n")
+            f.write(f"페이지 {page_num}: {title}\n")
+            f.write("="*80 + "\n")
+            f.write(f"URL: {item.get('url', '')}\n")
+            f.write(f"크롤링 시간: {timestamp}\n")
+            f.write(f"렌더링: {'예' if item.get('rendered') else '아니오'}\n")
+            f.write(f"깊이: {item.get('depth', 0)}\n")
+            f.write("="*80 + "\n\n")
+            
+            # Main text
+            text = item.get('text', '')
+            if text:
+                f.write("내용:\n" + "-"*80 + "\n")
+                f.write(text + "\n\n")
+            
+            # Out links
+            out_links = item.get('out_links', [])
+            if out_links:
+                f.write(f"외부 링크 ({len(out_links)}개):\n" + "-"*80 + "\n")
+                for link in out_links[:20]:  # First 20 links
+                    f.write(f"  • {link}\n")
+                if len(out_links) > 20:
+                    f.write(f"  ... 외 {len(out_links) - 20}개\n")
+                f.write("\n")
+            
+            # Images
+            images = item.get('images', [])
+            if images:
+                f.write(f"이미지 ({len(images)}개):\n" + "-"*80 + "\n")
+                for img in images[:10]:  # First 10 images
+                    f.write(f"  • {img.get('src', '')}\n")
+                    if img.get('alt'):
+                        f.write(f"    Alt: {img.get('alt')}\n")
+                if len(images) > 10:
+                    f.write(f"  ... 외 {len(images) - 10}개\n")
+    
+    def _clean_filename(self, title: str, max_length: int = 50) -> str:
+        """Clean title for use as filename."""
+        # Remove invalid characters
+        invalid_chars = '<>:"/\\|?*'
+        for char in invalid_chars:
+            title = title.replace(char, '_')
+        
+        # Limit length
+        if len(title) > max_length:
+            title = title[:max_length]
+        
+        # Remove trailing dots and spaces
+        title = title.rstrip('. ')
+        
+        return title or 'Untitled'
