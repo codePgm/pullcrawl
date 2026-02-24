@@ -18,21 +18,17 @@ class CrawlerCLI:
     
     def run(self, args):
         """Run crawler based on arguments."""
-        # Validate inputs
         if not args.url:
             print("❌ Error: URL is required")
             return 1
         
-        # Check prerequisites
         ok, error_msg = self._check_prerequisites(args.crawler_type)
         if not ok:
             print(f"❌ Error: {error_msg}")
             return 1
         
-        # Convert output dir to absolute path
         output_dir = os.path.abspath(args.output_dir)
         
-        # Run appropriate crawler
         if args.crawler_type == "simple":
             return self._run_simple_crawler(
                 args.url, 
@@ -52,7 +48,6 @@ class CrawlerCLI:
     def _check_prerequisites(self, crawler_type):
         """Check if required tools are installed."""
         if crawler_type == "simple":
-            # Check Python packages
             try:
                 import requests
                 import bs4
@@ -60,8 +55,7 @@ class CrawlerCLI:
             except ImportError as e:
                 return False, f"필수 패키지 누락: {e.name}\n실행: pip install requests beautifulsoup4"
         
-        else:  # advanced
-            # Check Scrapy
+        else:
             try:
                 result = subprocess.run(["scrapy", "version"], capture_output=True, text=True)
                 if result.returncode != 0:
@@ -83,7 +77,6 @@ class CrawlerCLI:
             print(f"출력: {output_dir}")
             print("")
             
-            # Import and run simple crawler
             sys.path.insert(0, str(Path(__file__).parent / "simple_crawler"))
             from crawler import DoxygenCrawler
             
@@ -128,7 +121,6 @@ class CrawlerCLI:
     def _run_advanced_crawler(self, url, max_pages, output_dir, depth, render):
         """Run advanced Scrapy crawler."""
         try:
-            # Extract domain from URL
             parsed = urlparse(url)
             domain = parsed.netloc
             
@@ -143,7 +135,6 @@ class CrawlerCLI:
             print(f"출력: {output_dir}")
             print("")
             
-            # Build Scrapy command
             scrapy_dir = Path(__file__).parent / "scrapy_crawler"
             
             cmd = [
@@ -156,7 +147,6 @@ class CrawlerCLI:
                 "-a", f"render={1 if render else 0}"
             ]
             
-            # Run Scrapy with real-time output
             self.process = subprocess.Popen(
                 cmd,
                 cwd=str(scrapy_dir),
@@ -167,12 +157,11 @@ class CrawlerCLI:
                 universal_newlines=True
             )
             
-            # Stream output with smart idle detection
             last_activity = time.time()
             max_idle_time = 180  # 3분간 진행 없으면 강제 종료
             last_page_count = 0
             
-            # 숨길 로그 패턴 (더 포괄적으로)
+            # 숨길 로그 패턴
             skip_patterns = [
                 '[asyncio] ERROR',
                 'AssertionError',
@@ -222,37 +211,30 @@ class CrawlerCLI:
                 
                 print(line.rstrip())
                 
-                # Check for ACTUAL progress (page count increasing)
                 if 'Crawled' in line and 'pages' in line:
                     try:
-                        # Extract page count: "Crawled 16 pages"
                         parts = line.split('Crawled')[1].split('pages')[0].strip()
                         current_pages = int(parts)
                         
-                        # Only reset timer if pages increased
                         if current_pages > last_page_count:
                             last_activity = time.time()
                             last_page_count = current_pages
                     except:
                         pass
                 
-                # Also reset on other important events
                 if 'Spider opened' in line or 'Launching browser' in line or '[✓]' in line:
                     last_activity = time.time()
                 
-                # Check if closing (give it 30 seconds to finish)
                 if 'Closing spider' in line:
                     print("\n⚠️  Spider 종료 중... 30초 대기")
-                    max_idle_time = 30  # Reduce timeout when closing
+                    max_idle_time = 30 
                 
-                # Force kill if idle too long
                 idle_time = time.time() - last_activity
                 if idle_time > max_idle_time:
                     print(f"\n⚠️  {int(idle_time)}초간 진행 없음. 강제 종료합니다...")
                     self.process.kill()
                     break
             
-            # Wait for process to finish
             try:
                 self.process.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -267,7 +249,6 @@ class CrawlerCLI:
                 print(f"  - JSON: {output_dir}/scrapy_json/pages.jsonl")
                 return 0
             elif self.process.returncode is None:
-                # Process killed due to timeout
                 print("\n⚠️  프로세스 강제 종료됨 (타임아웃)")
                 print(f"\n📁 출력:")
                 print(f"  - TXT: {output_dir}/scrapy_crawler/")
@@ -299,7 +280,7 @@ def main():
   # 간단 크롤러 사용
   python launcher_CLI.py -t simple -u "https://example.com/docs/index.html" -m 100
 
-  # 고급 크롤러 사용 (렌더링 없음)
+  # 고급 크롤러 사용
   python launcher_CLI.py -t advanced -u "https://vertx.io/docs/" -m 50 --no-render
 
   # 출력 폴더 지정
@@ -307,7 +288,6 @@ def main():
         """
     )
     
-    # Required arguments
     parser.add_argument(
         "-t", "--type",
         dest="crawler_type",
@@ -322,7 +302,6 @@ def main():
         help="시작 URL"
     )
     
-    # Optional arguments
     parser.add_argument(
         "-m", "--max-pages",
         type=int,
@@ -337,7 +316,6 @@ def main():
         help="출력 디렉토리 (기본값: ./crawl_output)"
     )
     
-    # Simple crawler options
     parser.add_argument(
         "-d", "--delay",
         type=float,
@@ -345,7 +323,6 @@ def main():
         help="요청 간격 (초, 간단 크롤러만 해당, 기본값: 1.0)"
     )
     
-    # Advanced crawler options
     parser.add_argument(
         "--depth",
         type=int,
@@ -361,7 +338,6 @@ def main():
         help="Playwright 렌더링 비활성화 (고급 크롤러만 해당)"
     )
     
-    # Version
     parser.add_argument(
         "-v", "--version",
         action="version",
@@ -370,7 +346,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Run crawler
     cli = CrawlerCLI()
     exit_code = cli.run(args)
     sys.exit(exit_code)
