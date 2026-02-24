@@ -1,0 +1,74 @@
+{
+  "name": "Crawler Dev Environment",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "crawler",
+  "workspaceFolder": "/workspace",
+
+  // VS Code 설정
+  "customizations": {
+    "vscode": {
+      // 추천 확장 프로그램
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff",
+        "njpwerner.autodocstring",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml"
+      ],
+      
+      // VS Code 설정
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackArgs": ["--line-length", "100"],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true,
+          "**/.scrapy": true
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  // 컨테이너 생성 후 실행할 명령
+  "postCreateCommand": "pip install --no-cache-dir -r requirements-dev.txt",
+
+  // 포트 포워딩 (필요시)
+  "forwardPorts": [6023, 8050],
+  "portsAttributes": {
+    "6023": {
+      "label": "Scrapy Telnet",
+      "onAutoForward": "ignore"
+    },
+    "8050": {
+      "label": "Splash (optional)",
+      "onAutoForward": "ignore"
+    }
+  },
+
+  // 컨테이너 기능
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // 마운트 설정
+  "mounts": [
+    // 크롤링 결과 영구 저장
+    "source=crawler-output,target=/workspace/crawl_output,type=volume"
+  ],
+
+  // 실행할 사용자
+  "remoteUser": "vscode"
+}

@@ -28,11 +28,9 @@ class CrawlerLauncher:
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
-        # Title
         title_label = ttk.Label(main_frame, text="통합 웹 크롤러", font=('Arial', 16, 'bold'))
         title_label.grid(row=0, column=0, columnspan=3, pady=10)
         
-        # Crawler Type Selection
         type_frame = ttk.LabelFrame(main_frame, text="크롤러 선택", padding="10")
         type_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
@@ -56,16 +54,13 @@ class CrawlerLauncher:
         )
         advanced_radio.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
         
-        # Description
         self.desc_label = ttk.Label(type_frame, text="", foreground="blue", wraplength=700)
         self.desc_label.grid(row=2, column=0, sticky=tk.W, padx=20, pady=5)
         
-        # URL Input
         ttk.Label(main_frame, text="URL:").grid(row=2, column=0, sticky=tk.W, padx=5, pady=5)
         self.url_var = tk.StringVar()
         ttk.Entry(main_frame, textvariable=self.url_var, width=70).grid(row=2, column=1, columnspan=2, sticky=(tk.W, tk.E), padx=5, pady=5)
         
-        # Common Options
         common_frame = ttk.LabelFrame(main_frame, text="공통 설정", padding="10")
         common_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
@@ -78,7 +73,6 @@ class CrawlerLauncher:
         ttk.Entry(common_frame, textvariable=self.output_dir_var, width=30).grid(row=0, column=3, sticky=(tk.W, tk.E), padx=5)
         ttk.Button(common_frame, text="찾아보기", command=self._browse_output_dir).grid(row=0, column=4, padx=5)
         
-        # Simple Crawler Options
         self.simple_frame = ttk.LabelFrame(main_frame, text="간단 크롤러 설정", padding="10")
         self.simple_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
@@ -86,11 +80,10 @@ class CrawlerLauncher:
         self.delay_var = tk.StringVar(value="1.0")
         ttk.Entry(self.simple_frame, textvariable=self.delay_var, width=10).grid(row=0, column=1, sticky=tk.W, padx=5)
         
-        # Advanced Crawler Options
         self.advanced_frame = ttk.LabelFrame(main_frame, text="고급 크롤러 설정", padding="10")
         self.advanced_frame.grid(row=4, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=10)
         
-        ttk.Label(self.advanced_frame, text="깊이 제한:").grid(row=0, column=0, sticky=tk.W, padx=5)
+        ttk.Label(self.advanced_frame, text="연관 링크 제한:").grid(row=0, column=0, sticky=tk.W, padx=5)
         self.depth_var = tk.StringVar(value="4")
         ttk.Entry(self.advanced_frame, textvariable=self.depth_var, width=10).grid(row=0, column=1, sticky=tk.W, padx=5)
         
@@ -98,7 +91,6 @@ class CrawlerLauncher:
         ttk.Checkbutton(self.advanced_frame, text="Playwright 렌더링 사용 (느리지만 SPA 지원)", 
                        variable=self.render_var).grid(row=0, column=2, sticky=tk.W, padx=20)
         
-        # Buttons
         button_frame = ttk.Frame(main_frame)
         button_frame.grid(row=5, column=0, columnspan=3, pady=10)
         
@@ -110,7 +102,6 @@ class CrawlerLauncher:
         
         ttk.Button(button_frame, text="결과 폴더 열기", command=self._open_output_folder).grid(row=0, column=2, padx=5)
         
-        # Progress
         ttk.Label(main_frame, text="진행 상황:").grid(row=6, column=0, sticky=tk.W, pady=5)
         self.progress_var = tk.StringVar(value="대기 중...")
         ttk.Label(main_frame, textvariable=self.progress_var).grid(row=6, column=1, columnspan=2, sticky=tk.W, pady=5)
@@ -118,18 +109,15 @@ class CrawlerLauncher:
         self.progress_bar = ttk.Progressbar(main_frame, mode='indeterminate')
         self.progress_bar.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         
-        # Log
         ttk.Label(main_frame, text="로그:").grid(row=8, column=0, sticky=tk.W, pady=5)
         self.log_text = scrolledtext.ScrolledText(main_frame, width=90, height=15, wrap=tk.WORD)
         self.log_text.grid(row=9, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         
-        # Configure grid
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(1, weight=1)
         main_frame.rowconfigure(9, weight=1)
         
-        # Initial state
         self._on_type_change()
     
     def _on_type_change(self):
@@ -137,17 +125,15 @@ class CrawlerLauncher:
         crawler_type = self.crawler_type.get()
         
         if crawler_type == "simple":
-            # Show simple options, hide advanced
             self.simple_frame.grid()
             self.advanced_frame.grid_remove()
             
-            self.desc_label.config(text="✓ 빠름 | ✓ 간단 | ✓ GUI | → NVIDIA, OpenCV, ROS 등 Doxygen/Sphinx 문서")
+            self.desc_label.config(text=" 간단 → NVIDIA, OpenCV, ROS 등 Doxygen/Sphinx 문서")
         else:
-            # Show advanced options, hide simple
             self.simple_frame.grid_remove()
             self.advanced_frame.grid()
             
-            self.desc_label.config(text="⚠ 느림 | ⚠ 복잡 | ⚠ 명령줄 | → Vert.x, React Docs 등 SPA 사이트")
+            self.desc_label.config(text="고급 → Vert.x, React Docs 등 SPA 사이트")
     
     def _browse_output_dir(self):
         """Browse for output directory."""
@@ -172,7 +158,6 @@ class CrawlerLauncher:
     def _check_prerequisites(self, crawler_type):
         """Check if required tools are installed."""
         if crawler_type == "simple":
-            # Check Python packages
             try:
                 import requests
                 import bs4
@@ -180,8 +165,7 @@ class CrawlerLauncher:
             except ImportError as e:
                 return False, f"필수 패키지 누락: {e.name}\n실행: pip install requests beautifulsoup4"
         
-        else:  # advanced
-            # Check Scrapy
+        else:
             try:
                 result = subprocess.run(["scrapy", "version"], capture_output=True, text=True)
                 if result.returncode != 0:
@@ -201,7 +185,6 @@ class CrawlerLauncher:
         
         crawler_type = self.crawler_type.get()
         
-        # Check prerequisites
         ok, error_msg = self._check_prerequisites(crawler_type)
         if not ok:
             messagebox.showerror("오류", error_msg)
@@ -248,7 +231,6 @@ class CrawlerLauncher:
             self._log(f"출력: {output_dir}")
             self._log("")
             
-            # Import and run simple crawler
             sys.path.insert(0, str(Path(__file__).parent / "simple_crawler"))
             from crawler import DoxygenCrawler
             
@@ -299,10 +281,8 @@ class CrawlerLauncher:
             depth = int(self.depth_var.get())
             render = 1 if self.render_var.get() else 0
             
-            # Convert to absolute path (important for Scrapy!)
             output_dir = os.path.abspath(output_dir)
             
-            # Extract domain from URL
             from urllib.parse import urlparse
             parsed = urlparse(url)
             domain = parsed.netloc
@@ -320,20 +300,18 @@ class CrawlerLauncher:
             self._log("⚠️  Scrapy 실행 중... (별도 창에서 진행됩니다)")
             self._log("")
             
-            # Build Scrapy command
             scrapy_dir = Path(__file__).parent / "scrapy_crawler"
             
             cmd = [
                 "scrapy", "crawl", "site",
                 "-a", f"seed={url}",
                 "-a", f"allowed_domains={domain}",
-                "-a", f"out_dir={output_dir}",  # Now absolute path!
+                "-a", f"out_dir={output_dir}",
                 "-a", f"max_pages={max_pages}",
                 "-a", f"max_depth={depth}",
                 "-a", f"render={render}"
             ]
-            
-            # Run Scrapy
+
             self.process = subprocess.Popen(
                 cmd,
                 cwd=str(scrapy_dir),
@@ -344,49 +322,94 @@ class CrawlerLauncher:
                 universal_newlines=True
             )
             
-            # Stream output with smart idle detection
             last_activity = time.time()
             max_idle_time = 180  # 3분간 진행 없으면 강제 종료
             last_page_count = 0
+            
+            # 숨길 로그 패턴
+            skip_patterns = [
+                '[asyncio] ERROR',
+                'AssertionError',
+                'ScrapyDeprecationWarning',
+                '[py.warnings] WARNING',
+                'Traceback',
+                'File "',
+                'self._context.run',
+                'assert f is self._write_fut',
+                'handle: <Handle',
+                '~~~~~~~~~~~~~~~~~',
+                '^^^^^^^^^^^^',
+                '[readability.readability] INFO',
+                'ruthless removal',
+                '_ProactorBaseWritePipeTransport',
+                '_loop_writing()',
+                'INFO: Scrapy',
+                'INFO: Versions',
+                'INFO: Enabled',
+                'Telnet',
+                'Started loop on separate thread',
+                'download handler',
+                'spider middlewares',
+                'downloader middlewares',
+                'item pipelines',
+                'Overridden settings',
+                "'lxml':",
+                "'libxml2':",
+                "'cssselect':",
+                "'parsel':",
+                "'w3lib':",
+                "'Twisted':",
+                "'Python':",
+                "'pyOpenSSL':",
+                "'cryptography':",
+                "'Platform':"
+            ]
             
             for line in iter(self.process.stdout.readline, ''):
                 if not self.is_crawling:
                     self.process.terminate()
                     break
                 
+                # 불필요한 로그 필터링
+                if any(pattern in line for pattern in skip_patterns):
+                    continue
+                
+                # 빈 줄이나 공백만 있는 줄도 스킵
+                if not line.strip():
+                    continue
+                
                 self._log(line.rstrip())
                 
-                # Check for ACTUAL progress (page count increasing)
+                # 진행 상황 확인
                 if 'Crawled' in line and 'pages' in line:
                     try:
-                        # Extract page count: "Crawled 16 pages"
+                        # 크롤링 된 페이지 수 추출
                         parts = line.split('Crawled')[1].split('pages')[0].strip()
                         current_pages = int(parts)
                         
-                        # Only reset timer if pages increased
+                        # 크롤링 된 페이지 수 가 증가하면 타이머 재설정
                         if current_pages > last_page_count:
                             last_activity = time.time()
                             last_page_count = current_pages
                     except:
                         pass
                 
-                # Also reset on other important events
-                if 'Spider opened' in line or 'Launching browser' in line:
+                if 'Spider opened' in line or 'Launching browser' in line or '[✓]' in line:
                     last_activity = time.time()
                 
-                # Check if closing (give it 30 seconds to finish)
+                # 30초 후 닫기 크롤링 종료
                 if 'Closing spider' in line:
                     self._log("\n⚠️  Spider 종료 중... 30초 대기")
-                    max_idle_time = 30  # Reduce timeout when closing
+                    max_idle_time = 30  # 기다리는시간 설정
                 
-                # Force kill if idle too long
+                # 일정 시간동안 아무것도 안하면 로그가 뜨고 종료시킴
                 idle_time = time.time() - last_activity
                 if idle_time > max_idle_time:
                     self._log(f"\n⚠️  {int(idle_time)}초간 진행 없음. 강제 종료합니다...")
-                    self.process.kill()  # KILL instead of terminate
+                    self.process.kill()  # 일정 시간이 지났는데 아무것도 안하면 종료
                     break
             
-            # Wait for process to finish
+            # 프로세스 완료까지 대기
             try:
                 self.process.wait(timeout=10)
             except subprocess.TimeoutExpired:
@@ -399,7 +422,7 @@ class CrawlerLauncher:
                 self.progress_var.set("완료!")
                 messagebox.showinfo("완료", f"크롤링 완료!\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages.jsonl")
             elif self.process.returncode is None:
-                # Process killed due to timeout
+                # 타임아웃
                 self._log("\n⚠️  프로세스 강제 종료됨 (타임아웃)")
                 self.progress_var.set("강제 종료됨")
                 messagebox.showinfo("완료", f"크롤링 완료 (강제 종료)\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages.jsonl")

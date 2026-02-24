@@ -294,4 +294,35 @@ MIT License
 
 ---
 
-Happy Crawling! 🎉
+도커 사용법
+devcontainer.json :
+    vscode 에서 도커를 실행하여 도커 환경에서 vscode 를 실행하게 만들기 위해서 사용함 
+    여러 컴퓨터에서 개발 할 시 개발 환경이 달라서 안될 수 도 있는데 이걸 해결 하기위해서 도커 에서 vscode 를 실행 시킴
+
+    **설치:**
+    1. VS Code 설치
+    2. "Dev Containers" 확장 설치
+    3. Docker Desktop 실행
+
+    **사용:**
+    1. VS Code에서 pullcrawl 폴더 열기
+    2. Ctrl+Shift+P (명령 팔레트)
+    3. "Dev Containers: Reopen in Container" 선택
+    4. 자동으로 컨테이너 생성 및 접속
+    5. VS Code 안에서 코드 편집/실행
+
+Dockerfile :
+    도커 이미지를 생성
+
+    # Docker Desktop에서
+    cd pullcrawl
+
+    # 이미지 빌드
+    docker build -t crawler -f .devcontainer/Dockerfile .
+
+    # 컨테이너 실행
+    docker run -it -v ${PWD}/crawl_output:/app/crawl_output crawler
+
+    # 크롤러 실행
+    python3 launcher_CLI.py -t simple -u "https://example.com" -m 10
+                                                "URL"              최대페이지

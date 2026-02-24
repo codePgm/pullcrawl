@@ -1,9 +1,9 @@
 @echo off
 chcp 65001 > nul
-title Unified Web Crawler - Debug Mode
+title Unified Web Crawler - Starting...
 
 echo ========================================
-echo  Unified Web Crawler - DEBUG MODE
+echo  Unified Web Crawler
 echo ========================================
 echo.
 
@@ -22,18 +22,14 @@ pip install requests beautifulsoup4 pypdf --quiet 2>nul
 
 echo.
 echo Starting launcher...
+echo This window will close automatically.
 echo.
 
-REM Run with error display (CMD stays open)
-python launcher.py
+REM Wait a moment
+timeout /t 1 /nobreak >nul
 
-REM Always pause to see errors
-echo.
-echo ========================================
-if errorlevel 1 (
-    echo [ERROR] Execution failed - see error above
-) else (
-    echo Program closed
-)
-echo ========================================
-pause
+REM Run GUI in background and close CMD window
+start "" pythonw launcher.py
+
+REM Exit immediately
+exit
