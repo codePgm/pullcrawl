@@ -28,8 +28,19 @@ class ImageAndJsonlPipeline(ImagesPipeline): # X
         super().open_spider(spider)
         self.out_dir = getattr(spider, "out_dir", "./dump")
         os.makedirs(self.out_dir, exist_ok=True)
-        self.jsonl_path = os.path.join(self.out_dir, "pages.jsonl")
-        self._fh = open(self.jsonl_path, "a", encoding="utf-8")
+        
+        self.limit = 495000
+        self.current_file_idx = 1
+        self.current_char_count = 0
+        
+        self.jsonl_path = self._get_jsonl_path(self.current_file_idx)
+        self._fh = open(self.jsonl_path, "w", encoding="utf-8")
+
+    def _get_jsonl_path(self, idx):
+        if idx == 1:
+            return os.path.join(self.out_dir, "pages.jsonl")
+        else:
+            return os.path.join(self.out_dir, f"pages_{idx}.jsonl")
 
     def close_spider(self, spider):
         try:
@@ -84,8 +95,22 @@ class ImageAndJsonlPipeline(ImagesPipeline): # X
         # Write JSONL
         rec = dict(item)
         rec.setdefault("fetched_at", now_iso())
-        self._fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        
+        item_str = json.dumps(rec, ensure_ascii=False) + "\n"
+        item_len = len(item_str)
+        
+        # Check limit (495,000 chars)
+        if self.current_char_count + item_len > self.limit and self.current_char_count > 0:
+            self._fh.close()
+            self.current_file_idx += 1
+            self.jsonl_path = self._get_jsonl_path(self.current_file_idx)
+            self._fh = open(self.jsonl_path, "w", encoding="utf-8")
+            self.current_char_count = 0
+            
+        self._fh.write(item_str)
         self._fh.flush()
+        self.current_char_count += item_len
+        
         return item
 
 
@@ -102,10 +127,20 @@ class JsonlPipeline:
         os.makedirs(self.json_dir, exist_ok=True)
         os.makedirs(self.txt_dir, exist_ok=True)
         
-        self.jsonl_path = os.path.join(self.json_dir, "pages.jsonl")
-        self._fh = open(self.jsonl_path, "a", encoding="utf-8")
+        self.limit = 495000
+        self.current_file_idx = 1
+        self.current_char_count = 0
+        
+        self.jsonl_path = self._get_jsonl_path(self.current_file_idx)
+        self._fh = open(self.jsonl_path, "w", encoding="utf-8")
         
         self.page_counter = 0
+
+    def _get_jsonl_path(self, idx):
+        if idx == 1:
+            return os.path.join(self.json_dir, "pages.jsonl")
+        else:
+            return os.path.join(self.json_dir, f"pages_{idx}.jsonl")
 
     def close_spider(self, spider):
         try:
@@ -117,8 +152,21 @@ class JsonlPipeline:
         # Save JSONL
         rec = dict(item)
         rec.setdefault("fetched_at", now_iso())
-        self._fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        
+        item_str = json.dumps(rec, ensure_ascii=False) + "\n"
+        item_len = len(item_str)
+        
+        # Check limit (495,000 chars)
+        if self.current_char_count + item_len > self.limit and self.current_char_count > 0:
+            self._fh.close()
+            self.current_file_idx += 1
+            self.jsonl_path = self._get_jsonl_path(self.current_file_idx)
+            self._fh = open(self.jsonl_path, "w", encoding="utf-8")
+            self.current_char_count = 0
+            
+        self._fh.write(item_str)
         self._fh.flush()
+        self.current_char_count += item_len
         
         # Save TXT file
         self.page_counter += 1

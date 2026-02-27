@@ -105,7 +105,7 @@ class CrawlerCLI:
                 print(f"✅ 완료! 총 {len(results)}개 페이지 수집")
                 print(f"\n📁 출력 위치:")
                 print(f"  - TXT: {output_dir}/simple_crawler/")
-                print(f"  - JSON: {output_dir}/simple_json/pages.jsonl")
+                print(f"  - JSON: {output_dir}/simple_json/pages*.jsonl")
                 
                 return 0
             else:
@@ -246,13 +246,13 @@ class CrawlerCLI:
                 print("\n✅ 크롤링 완료!")
                 print(f"\n📁 출력:")
                 print(f"  - TXT: {output_dir}/scrapy_crawler/")
-                print(f"  - JSON: {output_dir}/scrapy_json/pages.jsonl")
+                print(f"  - JSON: {output_dir}/scrapy_json/pages*.jsonl")
                 return 0
             elif self.process.returncode is None:
                 print("\n⚠️  프로세스 강제 종료됨 (타임아웃)")
                 print(f"\n📁 출력:")
                 print(f"  - TXT: {output_dir}/scrapy_crawler/")
-                print(f"  - JSON: {output_dir}/scrapy_json/pages.jsonl")
+                print(f"  - JSON: {output_dir}/scrapy_json/pages*.jsonl")
                 return 0
             else:
                 print(f"\n❌ 오류 발생 (코드: {self.process.returncode})")

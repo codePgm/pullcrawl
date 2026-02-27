@@ -253,10 +253,10 @@ class CrawlerLauncher:
                 self._log(f"완료! 총 {len(results)}개 페이지 수집")
                 self._log(f"\n출력 위치:")
                 self._log(f"  - TXT: {output_dir}/simple_crawler/")
-                self._log(f"  - JSON: {output_dir}/simple_json/pages.jsonl")
+                self._log(f"  - JSON: {output_dir}/simple_json/pages*.jsonl")
                 
                 self.progress_var.set(f"완료! {len(results)}개 페이지")
-                messagebox.showinfo("완료", f"크롤링 완료!\n\n{len(results)}개 페이지 수집\n\n출력:\n- TXT: {output_dir}/simple_crawler/\n- JSON: {output_dir}/simple_json/pages.jsonl")
+                messagebox.showinfo("완료", f"크롤링 완료!\n\n{len(results)}개 페이지 수집\n\n출력:\n- TXT: {output_dir}/simple_crawler/\n- JSON: {output_dir}/simple_json/pages*.jsonl")
             else:
                 self._log("\n중지됨")
                 self.progress_var.set("중지됨")
@@ -420,12 +420,12 @@ class CrawlerLauncher:
             if self.process.returncode == 0:
                 self._log("\n✅ 크롤링 완료!")
                 self.progress_var.set("완료!")
-                messagebox.showinfo("완료", f"크롤링 완료!\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages.jsonl")
+                messagebox.showinfo("완료", f"크롤링 완료!\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages*.jsonl")
             elif self.process.returncode is None:
                 # 타임아웃
                 self._log("\n⚠️  프로세스 강제 종료됨 (타임아웃)")
                 self.progress_var.set("강제 종료됨")
-                messagebox.showinfo("완료", f"크롤링 완료 (강제 종료)\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages.jsonl")
+                messagebox.showinfo("완료", f"크롤링 완료 (강제 종료)\n\n출력:\n- TXT: {output_dir}/scrapy_crawler/\n- JSON: {output_dir}/scrapy_json/pages*.jsonl")
             else:
                 self._log(f"\n❌ 오류 발생 (코드: {self.process.returncode})")
                 self.progress_var.set("오류")

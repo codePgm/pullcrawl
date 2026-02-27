@@ -324,14 +324,29 @@ class DoxygenCrawler:
         return self.pages_data
     
     def save_json(self) -> str:
-        """Save results as JSONL (JSON Lines) format - one JSON per line."""
+        """Save results as JSONL (JSON Lines) format - one JSON per line.
+        Splits into multiple files if character count exceeds 495,000.
+        """
         # New path: crawl_output/simple_json/pages.jsonl
         json_dir = Path(self.output_dir, "simple_json")
         json_dir.mkdir(parents=True, exist_ok=True)
-        json_file = json_dir / "pages.jsonl"
         
-        # Write JSONL format (one JSON object per line)
-        with open(json_file, 'w', encoding='utf-8') as f:
+        limit = 495000
+        current_file_idx = 1
+        current_char_count = 0
+        
+        def get_file_path(idx):
+            if idx == 1:
+                return json_dir / "pages.jsonl"
+            else:
+                return json_dir / f"pages_{idx}.jsonl"
+        
+        saved_files = []
+        current_file_path = get_file_path(current_file_idx)
+        f = open(current_file_path, 'w', encoding='utf-8')
+        saved_files.append(str(current_file_path))
+        
+        try:
             for page in self.pages_data:
                 if page['status'] != 'success':
                     continue
@@ -350,10 +365,27 @@ class DoxygenCrawler:
                     'images': []  # Simple crawler doesn't collect images
                 }
                 
-                # Write one JSON per line
-                f.write(json.dumps(jsonl_item, ensure_ascii=False) + '\n')
-        
-        return str(json_file)
+                item_str = json.dumps(jsonl_item, ensure_ascii=False) + '\n'
+                item_len = len(item_str)
+                
+                # Check if we need to switch to a new file (limit: 495,000 chars)
+                if current_char_count + item_len > limit and current_char_count > 0:
+                    f.close()
+                    current_file_idx += 1
+                    current_file_path = get_file_path(current_file_idx)
+                    f = open(current_file_path, 'w', encoding='utf-8')
+                    saved_files.append(str(current_file_path))
+                    current_char_count = 0
+                
+                f.write(item_str)
+                current_char_count += item_len
+        finally:
+            f.close()
+            
+        if len(saved_files) == 1:
+            return str(get_file_path(1))
+        else:
+            return f"{json_dir}\\pages*.jsonl ({len(saved_files)}개 파일)"
     
     def save_txt(self) -> str:
         """Save results as individual TXT files."""
